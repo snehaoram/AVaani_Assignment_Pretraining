@@ -81,7 +81,7 @@ Each sample should contain token IDs of fixed sequence length:
 Example DDP launch:
 
 ```bash id="jex5vs"
-torchrun --nproc_per_node=2 GPT2-decoPT.py
+torchrun --nproc_per_node=2 train.py
 ```
 
 ---
