@@ -129,7 +129,6 @@ Each checkpoint contains:
 
 ## Notes
 
-* The implementation is intended for educational and research purposes.
 * The architecture follows modern decoder design principles inspired by recent large language models.
 * Native PyTorch Scaled Dot Product Attention (SDPA) is utilized when available for improved efficiency.
 * The model is trained using autoregressive causal language modeling for next-token prediction.
