@@ -80,7 +80,7 @@ Each chunk should contain token IDs of fixed sequence length:
 Example DDP launch:
 
 ```bash
-torchrun --nproc_per_node=2 BERT-encoPT.py
+torchrun --nproc_per_node=2 train.py
 ```
 
 ---

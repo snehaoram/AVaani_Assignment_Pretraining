@@ -460,9 +460,6 @@ dist.init_process_group(backend="nccl")
 local_rank = int(os.environ["LOCAL_RANK"])
 torch.cuda.set_device(local_rank)
 
-# model = ModernBERT(vocab_size=32000, hidden_size=512, num_layers=16, num_heads=8, num_kv_heads=8, max_seq_len=128) 
-
-
 model = ModernBERT(vocab_size=32000, hidden_size=512, num_layers=16, num_heads=8, num_kv_heads=2, max_seq_len=128) #num_kv_heads=2
 model = model.to(local_rank)
 model = DDP(model, device_ids=[local_rank])
@@ -625,7 +622,6 @@ sampler = DistributedSampler(
 train_loader = DataLoader(
     train_dataset, 
     batch_size=micro_batch_size_per_gpu, # From your script (8), data
-    # shuffle=True,
     collate_fn=data_collator,
     num_workers=4,                       # Utilizes multi-process data loading
     pin_memory=True, 
@@ -648,8 +644,6 @@ scheduler = build_cosine_warmup_scheduler(
 # --------------------------------------------------------
 # Training loop with Gradient Accumulation
 # --------------------------------------------------------
-
-# from torch.amp import autocast # Core import for mixed precision
 
 # Checkpoint Helper Function
 def save_checkpoint(model, optimizer, scheduler, epoch, global_step, loss, checkpoint_dir="checkpointsBPT"):
@@ -751,142 +745,3 @@ for epoch in range(num_epochs):
 
 
 
-# model.train()
-
-# optimizer.zero_grad(set_to_none=True)
-
-# global_step = 0
-
-# for epoch in range(num_epochs):
-#     for micro_step, batch in enumerate(train_loader):
-#         input_ids = batch["input_ids"].to(device)
-#         attention_mask = batch["attention_mask"].to(device)
-#         labels = batch["labels"].to(device)
-
-#         logits = model(
-#             input_ids=input_ids,
-#             attention_mask=attention_mask,
-#         )
-
-#         loss = F.cross_entropy(
-#             logits.view(-1, logits.size(-1)),
-#             labels.view(-1),
-#             ignore_index=-100,
-#         )
-
-#         # Scale loss because gradients are accumulated over several micro-batches.
-#         loss = loss / gradient_accumulation_steps
-#         loss.backward()
-
-#         should_step = (
-#             (micro_step + 1) % gradient_accumulation_steps == 0
-#             or (micro_step + 1) == len(train_loader)
-#         )
-
-#         if should_step:
-#             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-
-#             optimizer.step()
-#             scheduler.step()
-#             optimizer.zero_grad(set_to_none=True)
-
-#             global_step += 1
-
-#             current_lr = scheduler.get_last_lr()[0]
-
-#             print(
-#                 f"epoch={epoch + 1} "
-#                 f"step={global_step}/{total_training_steps} "
-#                 f"loss={loss.item() * gradient_accumulation_steps:.4f} "
-#                 f"lr={current_lr:.6e}"
-#             )
-
-# 3. Create DataLoader
-# train_loader = DataLoader(
-#     train_dataset,
-#     batch_size=micro_batch_size_per_gpu, # From your script (8)
-#     shuffle=True,
-#     collate_fn=data_collator,
-#     num_workers=4,                       # Utilizes multi-process data loading
-#     pin_memory=True                      # Speeds up tensor transfer to GPU VRAM
-# )
-
- # can_use_flash = (
-        #     FLASH_ATTN_AVAILABLE
-        #     and x.is_cuda
-        #     and x.dtype in (torch.float16, torch.bfloat16)
-        #     and (attn_mask is None or causal)
-        # )
-
-        # if can_use_flash:
-        #     # cos, sin = positional_embedding
-        #     # q = apply_rope(q, cos, sin)
-        #     # k = apply_rope(k, cos, sin)
-        #     out = self._flash_attention(
-        #         q,
-        #         k,
-        #         v,
-        #         key_padding_mask=key_padding_mask,
-        #         causal=causal,
-        #     )
-        # else:
-
-        # def _flash_attention(self, q, k, v, key_padding_mask=None, causal=False):
-    #     """
-    #     q: [B, T, num_q_heads, head_dim]
-    #     k: [B, T, num_kv_heads, head_dim]
-    #     v: [B, T, num_kv_heads, head_dim]
-    #     """
-    #     dropout_p = self.dropout_p if self.training else 0.0
-
-    #     if key_padding_mask is None:
-    #         # Native GQA handling works perfectly here out of the box
-    #         return flash_attn_func(
-    #             q,
-    #             k,
-    #             v,
-    #             dropout_p=dropout_p,
-    #             softmax_scale=None,
-    #             causal=causal,
-    #         )
-
-    #     valid_mask = ~key_padding_mask.bool()
-
-    #     # BUG FIX: Unpad Q to get the shared structural pooling indexes 
-    #     q_unpad, indices_q, cu_seqlens, max_seqlen = unpad_input(q, valid_mask)
-        
-    #     # Manually unpad K and V using Q's sequence index maps to guarantee perfect 
-    #     # cross-head sequence matching and prevent runtime slicing errors.
-    #     B, T = key_padding_mask.shape
-    #     k_flat = k.flatten(0, 1) # Combine B and T -> [B*T, num_kv_heads, head_dim]
-    #     v_flat = v.flatten(0, 1)
-        
-    #     k_unpad = k_flat[indices_q]
-    #     v_unpad = v_flat[indices_q]
-
-    #     # Flash attention handles GQA with variable lengths smoothly if structures are identical
-    #     out_unpad = flash_attn_varlen_func(
-    #         q_unpad,
-    #         k_unpad,
-    #         v_unpad,
-    #         cu_seqlens_q=cu_seqlens,
-    #         cu_seqlens_k=cu_seqlens,
-    #         max_seqlen_q=max_seqlen,
-    #         max_seqlen_k=max_seqlen,
-    #         dropout_p=dropout_p,
-    #         softmax_scale=None,
-    #         causal=causal,
-    #     )
-
-    #     return pad_input(out_unpad, indices_q, B, T)
-
-    # class RMSNorm(nn.Module):
-#     def __init__(self, dim, eps=1e-6):
-#         super().__init__()
-#         self.eps = eps
-#         self.weight = nn.Parameter(torch.ones(dim))
-
-#     def forward(self, x):
-#         # Using rsqrt() replaces .sqrt() and the division '/'
-#         inv_rms = torch.rsqrt(x.pow(2).mean(dim=-1, keepdim=True) + self.eps)
-#         return self.weight * x * inv_rms

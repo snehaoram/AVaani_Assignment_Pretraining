@@ -3,7 +3,7 @@ from datasets import load_dataset, Dataset
 # Load dataset
 dataset = load_dataset(
     "ai4bharat/IndicCorpV2",
-    split="hin_Deva",
+    split="mar_Deva",
     streaming=True
 )
 
@@ -28,7 +28,7 @@ print("sampled")
 
 # Save locally
 small_dataset.save_to_disk(
-    "indiccorp_hindi_10percent"
+    "indiccorp_marathi_10percent"
 )
 
 print("complete")

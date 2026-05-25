@@ -8,7 +8,7 @@ import os
 # ---------------------------------------------------
 
 dataset = load_from_disk(
-    "indiccorp_hindi_10percent"
+    "indiccorp_marathi_10percent"
 )
 
 print(dataset)
@@ -18,7 +18,7 @@ print(dataset)
 # Rust tokenizer trains efficiently from text files
 # ---------------------------------------------------
 
-text_file = "hindi_corpusPT.txt"
+text_file = "marathi_corpusPT.txt"
 
 with open(text_file, "w", encoding="utf-8") as f:
     for example in dataset:
@@ -56,7 +56,7 @@ print("Tokenizer training complete..")
 # Save tokenizer
 # ---------------------------------------------------
 
-save_dir = "hindi_bpe_tokenizer"
+save_dir = "marathi_bpe_tokenizer"
 
 os.makedirs(save_dir, exist_ok=True)
 
